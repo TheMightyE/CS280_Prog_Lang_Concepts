@@ -13,10 +13,10 @@
 using namespace std;
 
 #include "ParseNode.h"
-#include "ParseNode.cpp"
 
 
-// int currentLine = 0;
+
+//int currentLine = 0;
 int globalErrorCount = 0;
 extern map<string,Value> symbolTable;
 extern map<string,bool> idMap;

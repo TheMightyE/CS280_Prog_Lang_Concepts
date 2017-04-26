@@ -7,7 +7,6 @@
 #include <map>
 #include <vector>
 #include "ParseNode.h"
-#include "methods.cpp"
 
 using namespace std;
 // We want to use our routine unchanged... BUT we want to have the ability
@@ -76,6 +75,7 @@ ParseNode *Stmt(istream& in) {
 			error("PARSE ERROR: semicolon required");
 			return 0;
 		}
+
 		symbolTable[idTok.getLexeme()] = exp->eval(symbolTable);
 
 		return new SetStatement(idTok.getLexeme(), exp);
@@ -96,6 +96,7 @@ ParseNode *Stmt(istream& in) {
 
 	}else{
 		PutBackToken(cmd);
+		// error("PARSE ERROR: PROGRAM must start with a STATEMENT");
 	}
 	return 0;
 }
@@ -155,7 +156,7 @@ ParseNode *Primary(istream& in) {
 	if(tok == ICONST){
 		return new Iconst(stoi(tok.getLexeme()));
 	} else if(tok == FCONST){
-		return new Fconst(stoi(tok.getLexeme()));
+		return new Fconst(stof(tok.getLexeme()));
 	} else if(tok == STRING){
 		return new Sconst(tok.getLexeme());
 	} else if(tok == LPAREN){

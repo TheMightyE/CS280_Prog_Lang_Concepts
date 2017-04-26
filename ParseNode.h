@@ -57,7 +57,6 @@ public:
 		if( v.GetType() == UNKNOWNVAL  ) o << "ERROR";
 		return o;
 	}
-
 };
 
 extern map<string,bool> idMap;
@@ -81,7 +80,7 @@ public:
 		return Value();
 	}
 
-	virtual void RunStaticChecks(map<string,bool>& idMap){
+	virtual void RunStaticChecks(map<string,bool>& idMap) {
  		if( left )
   		left->RunStaticChecks(idMap);
  		if( right )
@@ -89,14 +88,14 @@ public:
 		}
 };
 
-/*ostream& operator<<(ostream& o, ParseNode *node){
-	if(node->left == NULL) o << "NULL";
- 	else									o << node->left;
-	if(node->right == NULL) o << "NULL";
-	else										o << node->right;
-	return o;
-}
-*/
+// ostream& operator<<(ostream& o, ParseNode *node){
+// 	if(node->left == NULL) o << "NULL";
+// 	else									o << node->left;
+// 	if(node->right == NULL) o << "NULL";
+// 	else										o << node->right;
+// 	return o;
+// }
+
 
 // a list of statements is represented by a statement to the left, and a list of statments to the right
 class StatementList : public ParseNode {
@@ -148,7 +147,7 @@ public:
 		}else if(tLeft == STRINGVAL && tRight == STRINGVAL){
 			return Value(leftVal.GetStringValue() + rightVal.GetStringValue());
 		}else{
-			cout << "RUNTIME ERROR: " << "type mismatch" << endl;
+			cout << "RUNTIME ERROR: " << ": type mismatch" << endl;
 			return 0;
 		}
 
@@ -255,6 +254,7 @@ public:
 	Value eval(map<string,Value>& symbolTable){
 		return Value(sValue);
 	}
+	//operator+
 };
 
 class Ident : public ParseNode {
@@ -286,10 +286,10 @@ public:
 
 class Eval : public ParseNode {
 	ParseNode *l;
-	ParseNode *r;
+ 	ParseNode *r;
 public:
-	Eval(ParseNode *l, ParseNode *r) : l(l), r(r), ParseNode() {}
-};
+ 	Eval(ParseNode *l, ParseNode *r) : l(l), r(r), ParseNode() {}
+ };
 
 
 extern ParseNode *Prog(istream& in);
