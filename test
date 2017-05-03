@@ -14,3 +14,32 @@ Expected output for multpoly
 { 6.02, 12.04, 18.06 }
 { 1, 3.5, 7 }
 { 1, 5.5, 17, 24.5, 21 }
+else if(v.t == POLYNOMIAL){
+  // map<int, Value> polyTerms;
+  int len = coeffs.size() + v.coeffs.size() - 1;
+  int leftPower, rightPower;
+  vector<PolyTerm> polys;
+  // largest power is always less than length of two polynomals - 2
+  int power = coeffs.size() + v.coeffs.size() - 2;
+  Value product;
+  PolyTerm t;
+
+  for (int i = 0; i < coeffs.size(); ++i){
+    leftPower = (coeffs.size() - 1) - i;
+    for (int j = 0; j < v.coeffs.size(); ++j) {
+      rightPower = (v.coeffs.size() - 1) - j;
+      product = Value(coeffs[i] * v.coeffs[j]);
+      // polyTerms[leftPower + rightPower] = Value()
+      t.coeff = new Value(product);
+      t.power = leftPower + rightPower;
+      polys.push_back(t);
+      //newCoeffs.push_back(coeffs[i] * v.coeffs[j]);
+      for (int i = 0; i < polys.size(); i++) {
+        cout <<  *polys[i].coeff << ", ";
+      }
+    }
+
+  }
+
+  return Value(1);
+}

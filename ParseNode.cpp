@@ -289,11 +289,11 @@ ParseNode *EvalAt(istream& in) {
 			error("PARSE ERROR: RSQ required after expression in EvalAt");
 			return 0;
 		}
-		Value val = exp  -> eval(symbolTable);
+		/*Value val = exp  -> eval(symbolTable);
 		if(val.GetType() != INTEGERVAL && val.GetType() != FLOATVAL){
 			cout << "RUNTIME ERROR: Coeffs can only be evaluated at int and float values.";
 
-		}
+		}*/
 		return exp;
 
 	}
