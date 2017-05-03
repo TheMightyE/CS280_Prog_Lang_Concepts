@@ -12,6 +12,9 @@
 #include <string>
 #include <vector>
 #include <cctype>
+#include <cmath>
+#include <array>
+
 using namespace std;
 
 #include "polylex.h"
@@ -23,6 +26,7 @@ enum Type {
 	INTEGERVAL,
 	FLOATVAL,
 	STRINGVAL,
+	POLYNOMIAL,
 	UNKNOWNVAL,
 };
 
@@ -32,11 +36,13 @@ class Value {
 	float f;
 	string s;
 	Type	t;
+	vector<Value> coeffs;
 public:
 	Value(int i) : i(i), f(0), t(INTEGERVAL) {}
 	Value(float f) : i(0), f(f), t(FLOATVAL) {}
 	Value(string s) : i(0), f(0), s(s), t(STRINGVAL) {}
-	Value(){}
+	Value(vector<Value> coeffs) : i(0), f(0), s(""), coeffs(coeffs), t(POLYNOMIAL) {}
+	Value() : t(UNKNOWNVAL) {}
 
 
 	Type GetType() { return t; }
@@ -49,14 +55,220 @@ public:
 	string GetStringValue(){
 		return s;
 	}
+	vector<Value> GetPolyValue(){
+		return coeffs;
+	}
 
 	friend ostream& operator<<(ostream& o, Value& v ){
 		if( v.GetType() == INTEGERVAL  ) o << v.GetIntValue();
 		if( v.GetType() == FLOATVAL ) o << v.GetFloatValue();
-		if(v.GetType() == STRINGVAL) o << v.GetStringValue();
-		if( v.GetType() == UNKNOWNVAL  ) o << "ERROR";
+		if( v.GetType() == STRINGVAL) o << v.GetStringValue();
+		if( v.GetType() == POLYNOMIAL){
+			o << "{ " << v.GetPolyValue()[0];
+			for (int i = 1; i < v.GetPolyValue().size(); i++) {
+				o << ", " << v.GetPolyValue()[i];
+			}
+			o << " }";
+		}
+		if( v.GetType() == UNKNOWNVAL  ) o << "operator ERROR";
 		return o;
 	}
+
+	Value operator+(Value& v) {
+ 		if( t == INTEGERVAL ) {
+ 			if( v.t == INTEGERVAL ) return Value( i + v.i );
+			else if ( v.t == POLYNOMIAL){
+				vector<Value> newCoeffs = v.coeffs;
+				Value lastCoeff = newCoeffs[newCoeffs.size()-1];
+				newCoeffs.pop_back();
+				newCoeffs.push_back(Value(i) + lastCoeff);
+				return newCoeffs;
+			 }
+ 			else if( v.t == FLOATVAL ) return Value( i + v.f );
+
+ 		} else if( t == FLOATVAL ) {
+			if( v.t == INTEGERVAL ) return Value( f + v.i );
+ 			else if( v.t == FLOATVAL ) return Value( f + v.f );
+			else if( v.t == POLYNOMIAL){
+			}
+
+ 		} else if( t == STRINGVAL ) {
+ 			if( v.t == STRINGVAL ) return Value( s + v.s );
+ 		} else if( t == POLYNOMIAL){
+				if( v.t == INTEGERVAL || v.t == FLOATVAL){
+					Value lastCoeff = coeffs[coeffs.size()-1];
+					coeffs.pop_back();
+					coeffs.push_back(lastCoeff + v);
+					return coeffs;
+
+				}else if( t == POLYNOMIAL){
+						if( v.t == INTEGERVAL || v.t == FLOATVAL){
+							Value lastCoeff = coeffs[coeffs.size()-1];
+							coeffs.pop_back();
+							coeffs.push_back(lastCoeff - v);
+							return coeffs;
+
+						}else if( v.t == POLYNOMIAL){
+							int lenLeft = coeffs.size();
+							int lenRight = v.coeffs.size();
+							int small = min(lenLeft,lenRight) - 1;
+							int large = max(lenLeft,lenRight) - 1;;
+							vector<Value> largeCoeffList, smallCoeffList;
+							bool leftLarge = false;
+							if(coeffs.size() >= v.coeffs.size()){
+								leftLarge = true;
+								largeCoeffList = coeffs;
+								smallCoeffList = v.coeffs;
+							}else{
+								largeCoeffList = v.coeffs;
+								smallCoeffList = coeffs;
+							}
+
+							// make both vectors the same length
+							for (int i = 0; i < large - small; i++) {
+								smallCoeffList.insert(smallCoeffList.begin(), Value(0));
+							}
+
+							vector<Value> newCoeffs;
+							for (int i = 0; i < large + 1; i++){
+								// insert item in begin
+								if(leftLarge)
+									newCoeffs.push_back(largeCoeffList[i] + smallCoeffList[i]);
+								else
+									newCoeffs.push_back(smallCoeffList[i] + largeCoeffList[i]);
+							}
+							return Value(newCoeffs);
+						}
+					}
+
+			}
+ 			return Value(); // invalid!
+		}
+
+		Value operator-(Value& v) {
+	 		if( t == INTEGERVAL ) {
+	 			if( v.t == INTEGERVAL ) return Value( i - v.i );
+
+	 			else if( v.t == FLOATVAL ) return Value( i - v.f );
+
+				else if( v.t == POLYNOMIAL){
+					vector<Value> newCoeffs;
+					for (int i = 0; i < v.coeffs.size() - 1; i++) {
+						v.coeffs[i] = Value(-1) * v.coeffs[i];
+					}
+					Value lastCoeff = v.coeffs[v.coeffs.size()-1];
+					v.coeffs.pop_back();
+					v.coeffs.push_back((Value(i) - lastCoeff));
+					return v.coeffs;
+				}
+
+	 		} else if( t == FLOATVAL ) {
+				if( v.t == INTEGERVAL ) return Value( f - v.i );
+
+	 			else if( v.t == FLOATVAL ) return Value( f - v.f );
+
+	 		} else if( t == POLYNOMIAL){
+					if( v.t == INTEGERVAL || v.t == FLOATVAL){
+						Value lastCoeff = coeffs[coeffs.size()-1];
+						coeffs.pop_back();
+						coeffs.push_back(lastCoeff - v);
+						return coeffs;
+
+					}else if( v.t == POLYNOMIAL){
+						int lenLeft = coeffs.size();
+						int lenRight = v.coeffs.size();
+						int small = min(lenLeft,lenRight) - 1;
+						int large = max(lenLeft,lenRight) - 1;;
+						vector<Value> largeCoeffList, smallCoeffList;
+						bool leftLarge = false;
+						if(coeffs.size() >= v.coeffs.size()){
+							leftLarge = true;
+							largeCoeffList = coeffs;
+							smallCoeffList = v.coeffs;
+						}else{
+							largeCoeffList = v.coeffs;
+							smallCoeffList = coeffs;
+						}
+
+						// make both vectors the same length
+						for (int i = 0; i < large - small; i++) {
+							smallCoeffList.insert(smallCoeffList.begin(), Value(0));
+						}
+
+						vector<Value> newCoeffs;
+						for (int i = 0; i < large + 1; i++){
+							// insert item in begin
+							if(leftLarge)
+								newCoeffs.push_back(largeCoeffList[i] - smallCoeffList[i]);
+							else
+								newCoeffs.push_back(smallCoeffList[i] - largeCoeffList[i]);
+						}
+						return Value(newCoeffs);
+					}
+				}
+	 			return Value(); // invalid!
+			}
+
+			Value operator*(Value& v) {
+		 		if( t == INTEGERVAL ) {
+		 			if( v.t == INTEGERVAL ) return Value( i * v.i );
+		 			else if( v.t == FLOATVAL ) return Value( i * v.f );
+					else if( v.t == POLYNOMIAL){
+						vector<Value> newCoeffs;
+						for (int k = 0; k < v.coeffs.size(); k++){
+							newCoeffs.push_back(Value(i) * v.coeffs[k]);
+						}
+
+						return Value(newCoeffs);
+					}
+
+		 		} else if( t == FLOATVAL ) {
+					if( v.t == INTEGERVAL ) return Value( f * v.i );
+
+		 			else if( v.t == FLOATVAL ) return Value( f * v.f );
+
+		 		} else if( t == STRINGVAL ) {
+					string str = "";
+		 			if( v.t == INTEGERVAL ){
+						for (int i = 0; i < v.GetIntValue(); i++) {
+							str += s;
+						}
+					}
+		 				return Value(str);
+		 		} else if( t == POLYNOMIAL){
+					vector<Value> newCoeffs;
+					if (v.t == INTEGERVAL || v.t == FLOATVAL){
+						for (int i = 0; i < coeffs.size(); i++) {
+							newCoeffs.push_back(coeffs[i] * v);
+
+						}
+						return Value(newCoeffs);
+
+					} else if(v.t == POLYNOMIAL){
+						int len = coeffs.size() + v.coeffs.size() - 1;
+						vector<Value> newCoeffs;
+						// largest power is always less than length of two polynomals - 2
+						int power = coeffs.size() + v.coeffs.size() - 2;
+						for (int i = 0; i < coeffs.size(); ++i){
+							for (int j = 0; j < v.coeffs.size(); ++j) {
+								newCoeffs.push_back(coeffs[i] * v.coeffs[j]);
+								// = coeffs[i] * v.coeffs[j]; //store operation
+								//place it into a map in correct position
+							}
+
+						}
+
+						//TODO simplify values in the map, store operations
+
+						return Value(newCoeffs);
+
+					}
+
+				}
+
+		 			return Value(); // invalid!
+				}
+
 };
 
 extern map<string,bool> idMap;
@@ -133,25 +345,14 @@ public:
 		Value leftVal = left->eval(symbolTable);
 		Value rightVal = right->eval(symbolTable);
 
-		Type tLeft = leftVal.GetType();
-		Type tRight = rightVal.GetType();
+		Value sum = leftVal + rightVal;
 
-		if(tLeft == INTEGERVAL && tRight == INTEGERVAL){
-			return Value(leftVal.GetIntValue() + rightVal.GetIntValue());
-		}else if(tLeft == INTEGERVAL && tRight == FLOATVAL){
-			return Value(leftVal.GetIntValue() + rightVal.GetFloatValue());
-		}else if(tLeft == FLOATVAL && tRight == INTEGERVAL){
-			return Value(leftVal.GetFloatValue() + rightVal.GetIntValue());
-		}else if(tLeft == FLOATVAL && tRight == FLOATVAL){
-			return Value(leftVal.GetFloatValue() + rightVal.GetFloatValue());
-		}else if(tLeft == STRINGVAL && tRight == STRINGVAL){
-			return Value(leftVal.GetStringValue() + rightVal.GetStringValue());
-		}else{
+		if(sum.GetType() == UNKNOWNVAL){
 			cout << "RUNTIME ERROR: " << ": type mismatch" << endl;
-			return 0;
+			exit(0);
 		}
 
-		return 0;
+		return sum;
 	}
 
 };
@@ -164,21 +365,14 @@ public:
 		Value leftVal = left->eval(symbolTable);
 		Value rightVal = right->eval(symbolTable);
 
-		Type tLeft = leftVal.GetType();
-		Type tRight = rightVal.GetType();
+		Value sum = leftVal - rightVal;
 
-		if(tLeft == INTEGERVAL && tRight == INTEGERVAL){
-			return Value(leftVal.GetIntValue() - rightVal.GetIntValue());
-		}else if(tLeft == INTEGERVAL && tRight == FLOATVAL){
-			return Value(leftVal.GetIntValue() - rightVal.GetFloatValue());
-		}else if(tLeft == FLOATVAL && tRight == INTEGERVAL){
-			return Value(leftVal.GetFloatValue() - rightVal.GetIntValue());
-		}else if(tLeft == FLOATVAL && tRight == FLOATVAL){
-			return Value(leftVal.GetFloatValue() - rightVal.GetFloatValue());
-		}else{
+		if(sum.GetType() == UNKNOWNVAL){
 			cout << "RUNTIME ERROR: " << ": type mismatch" << endl;
-			return 0;
+			exit(0);
 		}
+
+		return sum;
 	}
 };
 
@@ -191,35 +385,15 @@ public:
 		Value leftVal = left->eval(symbolTable);
 		Value rightVal = right->eval(symbolTable);
 
-		Type tLeft = leftVal.GetType();
-		Type tRight = rightVal.GetType();
+		Value sum = leftVal * rightVal;
 
-		if(tLeft == INTEGERVAL && tRight == INTEGERVAL){
-			return Value(leftVal.GetIntValue() * rightVal.GetIntValue());
-		}else if(tLeft == INTEGERVAL && tRight == FLOATVAL){
-			return Value(leftVal.GetIntValue() * rightVal.GetFloatValue());
-		}else if(tLeft == FLOATVAL && tRight == INTEGERVAL){
-			return Value(leftVal.GetFloatValue() * rightVal.GetIntValue());
-		}else if(tLeft == FLOATVAL && tRight == FLOATVAL){
-			return Value(leftVal.GetFloatValue() * rightVal.GetFloatValue());
-		}else if(tLeft == STRINGVAL && tRight == INTEGERVAL){
-			string s = "";
-			for (int i = 0; i < rightVal.GetIntValue(); i++) {
-				s += leftVal.GetStringValue();
-			}
-			return Value(s);
-		}else{
+		if(sum.GetType() == UNKNOWNVAL){
 			cout << "RUNTIME ERROR: " << ": type mismatch" << endl;
-			return 0;
+			exit(0);
 		}
-	}
-};
 
-// a representation of a list of coefficients must be developed
-class Coefficients : public ParseNode {
-	std::vector<ParseNode *> v;
-public:
-	Coefficients(std::vector<ParseNode *> v): v(v), ParseNode() {}
+		return sum;
+	}
 };
 
 // leaves of the parse tree
@@ -254,7 +428,6 @@ public:
 	Value eval(map<string,Value>& symbolTable){
 		return Value(sValue);
 	}
-	//operator+
 };
 
 class Ident : public ParseNode {
@@ -275,7 +448,7 @@ public:
 
 	void RunStaticChecks(map<string,bool>& idMap) {
 		if( idMap[id] == false ) {
-			cout << "RUNTIME ERROR: Identifier " + id + " used before set";
+			cout << "RUNTIME ERROR: Identifier " + id + " used before set" << endl;
 		}
 
 	}
@@ -284,11 +457,54 @@ public:
 	}
 };
 
-class Eval : public ParseNode {
-	ParseNode *l;
- 	ParseNode *r;
+// a representation of a list of coefficients must be developed
+class Coefficients : public ParseNode {
+	vector<ParseNode *> v;
 public:
- 	Eval(ParseNode *l, ParseNode *r) : l(l), r(r), ParseNode() {}
+	Coefficients(vector<ParseNode *> v): v(v), ParseNode() {}
+	Value eval(map<string,Value>& symbolTable){
+			vector<Value> coeffs;
+			Value coeffVal;
+			for (int i = 0; i < v.size(); i++) {
+				coeffVal = v[i] -> eval(symbolTable);
+				coeffs.push_back(coeffVal);
+			}
+			return Value(coeffs);
+	}
+};
+
+class Eval : public ParseNode {
+public:
+ 	Eval(ParseNode *l, ParseNode *r) : ParseNode(l,r) {}
+	/*Value eval(map<string,Value>& symbolTable){ //Seg Fault
+		Value leftVal = left -> eval(symbolTable);
+		Value rightVal = right -> eval(symbolTable);
+		return leftVal;
+		vector<Value> coeff(leftVal.GetPolyValue());
+		if(leftVal.GetType() == POLYNOMIAL){
+			int amount_of_x = coeff.size() - 1;
+			float ans = 0;
+			int curr_x;
+			for (int i = 0; i < amount_of_x; i++){
+				if(rightVal.GetType() == INTEGERVAL){
+					curr_x = pow(rightVal.GetIntValue(), amount_of_x) * coeff[i].GetIntValue();
+					ans += curr_x;
+					cout << curr_x << endl;
+					amount_of_x--;
+				} else if(rightVal.GetType() == FLOATVAL){
+
+				}
+				//last coeff
+				// ans += coeff[coeff.length()-1];
+			}
+
+			cout << ans << endl;
+			return Value(ans);
+		} else{
+			cout << "RUNTIME ERROR: Only polynomals can be evaluted" << endl;
+		}
+
+	}*/
  };
 
 

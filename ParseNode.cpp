@@ -196,21 +196,14 @@ ParseNode *Poly(istream& in) {
 			if(eval == 0){
 				return new Ident(tok.getLexeme());
 			}else{
-				return eval;
+				return new Eval(new Ident(tok.getLexeme()), eval);
 			}
 
 		}
 		PutBackToken(tok);
-
-		// ParseNode *eval = EvalAt(in);
-		// if(eval == 0){
-		// 	error("PARSE ERROR: ");
-		// }else{
-		// 	return eval;
-		// }
-		// error("PARSE ERROR: Missing LBR in poly");
 		return 0;
-	}else{
+
+	} else{
 		ParseNode *coeffs = Coeffs(in);
 		if((tok = GetToken(in)) == RBR){
 			ParseNode *eval = EvalAt(in);
@@ -232,10 +225,10 @@ ParseNode *Poly(istream& in) {
 // this rule checks for a list of length at least one
 ParseNode *Coeffs(istream& in){
     vector <ParseNode *> coeffs;
-    ParseNode *p = Coeff(in);
-    if (p == 0)
+    ParseNode *coeff = Coeff(in);
+    if (coeff == 0)
         return 0;
-    coeffs.push_back(p);
+    coeffs.push_back(coeff);
 
     while(true)
     {
@@ -245,25 +238,35 @@ ParseNode *Coeffs(istream& in){
         	PutBackToken(t);
         	break;
         }
-        p = Coeff(in);
-        if (p == 0)
+        coeff = Coeff(in);
+        if (coeff == 0)
         {
             error("Missing coefficient after comma");
             return 0;
         }
-        coeffs.push_back(p);
+        coeffs.push_back(coeff);
     }
 
 	return new Coefficients(coeffs);
 }
 
 ParseNode *Coeff(istream& in) {
+	bool isNegative = false;
 	Token tok = GetToken(in);
+	// cout << tok.getLexeme() << endl;
+	if(tok.getLexeme() == "-"){
+		isNegative = true;
+		tok = GetToken(in);
+	}
 	if(tok == ICONST){
+		if(isNegative)
+			return new Iconst(stoi(tok.getLexeme()) * -1);
 		return new Iconst(stoi(tok.getLexeme()));
 	}
 	else if(tok == FCONST){
-		return new Fconst(stoi(tok.getLexeme()));
+		if(isNegative)
+			return new Fconst(stof(tok.getLexeme()) * -1);
+		return new Fconst(stof(tok.getLexeme()));
 	}
 	else{
 		error("PARSE ERROR: Only int and float values allowed in coefficients");
@@ -285,6 +288,11 @@ ParseNode *EvalAt(istream& in) {
 		if(tok != RSQ){
 			error("PARSE ERROR: RSQ required after expression in EvalAt");
 			return 0;
+		}
+		Value val = exp  -> eval(symbolTable);
+		if(val.GetType() != INTEGERVAL && val.GetType() != FLOATVAL){
+			cout << "RUNTIME ERROR: Coeffs can only be evaluated at int and float values.";
+
 		}
 		return exp;
 

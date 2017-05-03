@@ -6,8 +6,6 @@
 
 using namespace std;
 
-void mostFreqID(vector<Token>);
-
 bool comment = false;
 int currentLine = 1;
 

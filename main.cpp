@@ -49,7 +49,6 @@ int main(int argc, char *argv[]) {
 		cout << "PARSE ERROR: Program failed!" << endl;
 		return 1;
 	}
-	// cout << identifiers["x"]->GetType() << endl;
 	// need to look at the parse here
 	program -> RunStaticChecks(idMap);
 	program -> eval(symbolTable);
