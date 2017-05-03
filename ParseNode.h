@@ -14,6 +14,7 @@
 #include <cctype>
 #include <cmath>
 #include <array>
+#include <algorithm>
 
 using namespace std;
 
@@ -260,33 +261,55 @@ public:
 						return Value(newCoeffs);
 
 					} else if(v.t == POLYNOMIAL){
-					  map<int, Value> polyTerms;
 					  int len = coeffs.size() + v.coeffs.size() - 1;
 					  int leftPower, rightPower;
 					  vector<PolyTerm> polys;
-					  // largest power is always less than length of two polynomals - 2
-					  int power = coeffs.size() + v.coeffs.size() - 2;
+					  // Note to self: largest power is always -> length of two polynomals - 2
 					  Value product;
 					  PolyTerm t;
 
+						// Foil th two polynomals
 					  for (int i = 0; i < coeffs.size(); ++i){
 					    leftPower = (coeffs.size() - 1) - i;
 					    for (int j = 0; j < v.coeffs.size(); ++j) {
 					      rightPower = (v.coeffs.size() - 1) - j;
 					      product = Value(coeffs[i] * v.coeffs[j]);
-					      // polyTerms[leftPower + rightPower] = Value(coeffs[i] * v.coeffs[j]);
 					      t.coeff = new Value(product);
 					      t.power = leftPower + rightPower;
 					      polys.push_back(t);
-					      //newCoeffs.push_back(coeffs[i] * v.coeffs[j]);
-					      /*for (int i = 0; i < polys.size(); i++) {
-					        cout <<  *polys[i].coeff << ", ";
-					      }*/
 					    }
-
 					  }
+						vector<Value> val;
+						vector<int> evaluatedPower;
+						Value v;
+						bool found;
+						// Add like terms
+						for (int i = 0; i < polys.size(); i++) {
+							v = *polys[i].coeff; //Represents the current coefficient in the loop
+							found = false;
+							// Check if the current power has already been added
+							if(find(evaluatedPower.begin(), evaluatedPower.end(), polys[i].power) ==
+								evaluatedPower.end()){
+									for (int j = i+1; j < polys.size(); j++) {
+										// If two powers are the same, add their coefficients
+										if(polys[i].power == polys[j].power){
+											found = true;
+											v = v + *polys[j].coeff;
+										}
+									}
+									/* If !found, then current coefficient does not have a like term.
+											Simply it to the vector.
+									*/
+									if(!found){
+										val.push_back(*polys[i].coeff);
+									}else{
+										evaluatedPower.push_back(polys[i].power);
+										val.push_back(v);
+									}
+							}
+						}
 
-					  return Value(1);
+					  return Value(val);
 					}
 
 				}
@@ -298,7 +321,6 @@ public:
 
 extern map<string,bool> idMap;
 extern map<string,Value> symbolTable;
-
 
 // every node in the parse tree is going to be a subclass of this node
 class ParseNode {
@@ -344,7 +366,9 @@ public:
 class SetStatement : public ParseNode {
 	string id;
 public:
-	SetStatement(string id, ParseNode* exp) : id(id), ParseNode(exp) {}
+	SetStatement(string id, ParseNode* exp) : id(id), ParseNode(exp) {
+		symbolTable[id] = exp->eval(symbolTable);
+	}
 	void RunStaticChecks(map<string,bool>& idMap){
 	  idMap[id] = true;
 	}
@@ -504,7 +528,11 @@ public:
  	Eval(ParseNode *l, ParseNode *r) : ParseNode(l,r) {}
 	Value eval(map<string,Value>& symbolTable){
 		Value leftVal = left -> eval(symbolTable);
+		// cout << "LEFT: " << leftVal << endl;
+
 		Value rightVal = right -> eval(symbolTable);
+		// cout << "RGIHT: " << rightVal << endl;
+
 		if(rightVal.GetType() != INTEGERVAL && rightVal.GetType() != FLOATVAL){
 			cout << "RUNTIME ERROR: Coeffs can only be evaluated at int and float values." << endl;
 			exit(0);
@@ -512,10 +540,14 @@ public:
 		vector<Value> coeffs(leftVal.GetPolyValue());
 		if(leftVal.GetType() == POLYNOMIAL){
 			int amount_of_x = coeffs.size() - 1;
-			Value ans(0);
-			Value curr_x;
+			Value ans(0), curr_x, val;
 			for (int i = 0; i < coeffs.size() - 1; i++){
-				Value val(int(pow(rightVal.GetIntValue(), amount_of_x))); //TODO check rightVal type
+				if(rightVal.GetType() == INTEGERVAL)
+					val = Value(int(pow(rightVal.GetIntValue(), amount_of_x)));
+				else
+					val = Value(float(pow(rightVal.GetFloatValue(), amount_of_x)));
+
+
 				curr_x = Value(coeffs[i] * val);
 				ans = ans + curr_x;
 				amount_of_x--;

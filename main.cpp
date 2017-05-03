@@ -18,8 +18,8 @@ using namespace std;
 
 //int currentLine = 0;
 int globalErrorCount = 0;
-extern map<string,Value> symbolTable;
-extern map<string,bool> idMap;
+map<string,Value> symbolTable;
+map<string,bool> idMap;
 
 int main(int argc, char *argv[]) {
 	ifstream file;

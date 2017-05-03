@@ -1,45 +1,31 @@
-Expected output for multpoly
-{ 1,2,3 } * { 4, 5, 6 }
-{ 4, 13, 28, 27, 18 }
-{ 1, 0, -1 }
-{ 1, 2, 3 }
-{ 4, 5 }
-{ 4, 13, 22, 15 }
-{ 4, 13, 22, 15 }
-{ 10, 20, 30 }
-{ 16, 20 }
-{ 0, 0, 0 }
-{ 1, 2, 3 }
-======
-{ 6.02, 12.04, 18.06 }
-{ 1, 3.5, 7 }
-{ 1, 5.5, 17, 24.5, 21 }
-else if(v.t == POLYNOMIAL){
-  // map<int, Value> polyTerms;
-  int len = coeffs.size() + v.coeffs.size() - 1;
-  int leftPower, rightPower;
-  vector<PolyTerm> polys;
-  // largest power is always less than length of two polynomals - 2
-  int power = coeffs.size() + v.coeffs.size() - 2;
-  Value product;
-  PolyTerm t;
 
-  for (int i = 0; i < coeffs.size(); ++i){
-    leftPower = (coeffs.size() - 1) - i;
-    for (int j = 0; j < v.coeffs.size(); ++j) {
-      rightPower = (v.coeffs.size() - 1) - j;
-      product = Value(coeffs[i] * v.coeffs[j]);
-      // polyTerms[leftPower + rightPower] = Value()
-      t.coeff = new Value(product);
-      t.power = leftPower + rightPower;
-      polys.push_back(t);
-      //newCoeffs.push_back(coeffs[i] * v.coeffs[j]);
-      for (int i = 0; i < polys.size(); i++) {
-        cout <<  *polys[i].coeff << ", ";
-      }
-    }
+set p1 { 1,1,1,1,1 };
+print p1[1];
+print p1[2];
+print p1[3];
+print p1[1+2];
 
-  }
+print {1,1,1}+{2,2,2}[3];
 
-  return Value(1);
-}
+set bp {1,0,0,0,0,1};
+set v1 bp[0]; #<-----------
+set v2 bp[1];
+set v3 bp[ bp[1] ];
+set v4 bp[ bp[ bp[1] ] ];
+
+print v1;#<-----------
+print v2;
+print v3;
+print v4;
+set v1 v1 + v2 + v3 + v4;#<-----------
+print v1;#<-----------
+
+set px { 1,1,1 };
+set py { 1,0,0,0,1 };
+set pz px*py;
+
+print pz;
+
+print pz[0];
+print pz[2];
+print pz[8];

@@ -15,8 +15,6 @@ using namespace std;
 
 static bool pushedBack = false;
 static Token pushedToken;
-map<string,Value> symbolTable;
-map<string,bool> idMap;
 
 // int globalErrorCount = 0;
 
@@ -75,8 +73,6 @@ ParseNode *Stmt(istream& in) {
 			error("PARSE ERROR: semicolon required");
 			return 0;
 		}
-
-		symbolTable[idTok.getLexeme()] = exp->eval(symbolTable);
 
 		return new SetStatement(idTok.getLexeme(), exp);
 
@@ -253,17 +249,18 @@ ParseNode *Coeffs(istream& in){
 ParseNode *Coeff(istream& in) {
 	bool isNegative = false;
 	Token tok = GetToken(in);
-	// cout << tok.getLexeme() << endl;
 	if(tok.getLexeme() == "-"){
 		isNegative = true;
 		tok = GetToken(in);
 	}
 	if(tok == ICONST){
+		// Forgot to handle negative values in my gettoken
 		if(isNegative)
 			return new Iconst(stoi(tok.getLexeme()) * -1);
 		return new Iconst(stoi(tok.getLexeme()));
 	}
 	else if(tok == FCONST){
+		// Forgot to handle negative values in my gettoken
 		if(isNegative)
 			return new Fconst(stof(tok.getLexeme()) * -1);
 		return new Fconst(stof(tok.getLexeme()));
@@ -289,15 +286,8 @@ ParseNode *EvalAt(istream& in) {
 			error("PARSE ERROR: RSQ required after expression in EvalAt");
 			return 0;
 		}
-		/*Value val = exp  -> eval(symbolTable);
-		if(val.GetType() != INTEGERVAL && val.GetType() != FLOATVAL){
-			cout << "RUNTIME ERROR: Coeffs can only be evaluated at int and float values.";
-
-		}*/
 		return exp;
-
 	}
-
 	PutBackToken(tok);
 	return 0;
 }
