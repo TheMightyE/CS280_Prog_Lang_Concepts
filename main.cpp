@@ -2,7 +2,7 @@
  * prog3.cpp
  *
  *  Created on: Feb 20, 2017
- *      Author: gerardryan
+ *      Author: gerardryan, Syed Khalid
  */
 
 #include <string>

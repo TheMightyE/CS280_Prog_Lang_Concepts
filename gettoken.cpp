@@ -1,3 +1,9 @@
+/*
+ * gettoken.cpp
+ *
+ *  Created on: Apr 2, 2017
+ *      Author: Syed Khalid
+ */
 #include <iostream>
 #include <string>
 #include <fstream>
