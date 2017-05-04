@@ -8,7 +8,7 @@ print p1[1+2];
 print {1,1,1}+{2,2,2}[3];
 
 set bp {1,0,0,0,0,1};
-set v1 bp[0]; #<-----------
+set v1 bp[0];#<-----------
 set v2 bp[1];
 set v3 bp[ bp[1] ];
 set v4 bp[ bp[ bp[1] ] ];

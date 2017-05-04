@@ -365,9 +365,12 @@ public:
 // a SetStatement represents the idea of setting id to the value of the Expr pointed to by the left node
 class SetStatement : public ParseNode {
 	string id;
+	ParseNode *exp;
 public:
-	SetStatement(string id, ParseNode* exp) : id(id), ParseNode(exp) {
+	SetStatement(string id, ParseNode* exp) : id(id), exp(exp), ParseNode(exp) {}
+	Value eval(map<string,Value>& symbolTable){
 		symbolTable[id] = exp->eval(symbolTable);
+		return Value();
 	}
 	void RunStaticChecks(map<string,bool>& idMap){
 	  idMap[id] = true;
