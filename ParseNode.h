@@ -31,10 +31,10 @@ enum Type {
 	UNKNOWNVAL,
 };
 
-/*void runtimeError(string message){
+static void runtimeError(string message){
 	cout << "RUNTIME ERROR: " << message << endl;
 	exit(0);
-}*/
+}
 
 // this class will be used in the future to hold results of evaluations
 class Value {
@@ -82,83 +82,79 @@ public:
 
 	Value operator+(Value& v) {
  		if( t == INTEGERVAL ) {
- 			if( v.t == INTEGERVAL ) return Value( i + v.i );
-			else if ( v.t == POLYNOMIAL){
+ 			if( v.t == INTEGERVAL ) return Value( i + v.i ); // INT + INT
+			else if ( v.t == POLYNOMIAL){ // INT + POLY
 				vector<Value> newCoeffs = v.coeffs;
 				Value lastCoeff = newCoeffs[newCoeffs.size()-1];
 				newCoeffs.pop_back();
 				newCoeffs.push_back(Value(i) + lastCoeff);
 				return newCoeffs;
 			 }
- 			else if( v.t == FLOATVAL ) return Value( i + v.f );
+ 			else if( v.t == FLOATVAL ) return Value( i + v.f ); // INT + FLOAT
 
  		} else if( t == FLOATVAL ) {
-			if( v.t == INTEGERVAL ) return Value( f + v.i );
- 			else if( v.t == FLOATVAL ) return Value( f + v.f );
-			else if( v.t == POLYNOMIAL){
+			if( v.t == INTEGERVAL ) return Value( f + v.i ); // FLOAT + INT
+ 			else if( v.t == FLOATVAL ) return Value( f + v.f ); // FLOAT + FLOAT
+			else if( v.t == POLYNOMIAL){ // FLOAT + POLY
+				vector<Value> newCoeffs = v.coeffs;
+				Value lastCoeff = newCoeffs[newCoeffs.size()-1];
+				newCoeffs.pop_back();
+				newCoeffs.push_back(Value(f) + lastCoeff);
+				return newCoeffs;
 			}
 
  		} else if( t == STRINGVAL ) {
- 			if( v.t == STRINGVAL ) return Value( s + v.s );
+ 			if( v.t == STRINGVAL ) return Value( s + v.s ); // STRING + STRING
  		} else if( t == POLYNOMIAL){
-				if( v.t == INTEGERVAL || v.t == FLOATVAL){
+				if( v.t == INTEGERVAL || v.t == FLOATVAL){ // POLY + INT or FLOAT
 					Value lastCoeff = coeffs[coeffs.size()-1];
 					coeffs.pop_back();
 					coeffs.push_back(lastCoeff + v);
 					return coeffs;
 
-				}else if( t == POLYNOMIAL){
-						if( v.t == INTEGERVAL || v.t == FLOATVAL){
-							Value lastCoeff = coeffs[coeffs.size()-1];
-							coeffs.pop_back();
-							coeffs.push_back(lastCoeff - v);
-							return coeffs;
-
-						}else if( v.t == POLYNOMIAL){
-							int lenLeft = coeffs.size();
-							int lenRight = v.coeffs.size();
-							int small = min(lenLeft,lenRight) - 1;
-							int large = max(lenLeft,lenRight) - 1;;
-							vector<Value> largeCoeffList, smallCoeffList;
-							bool leftLarge = false;
-							if(coeffs.size() >= v.coeffs.size()){
-								leftLarge = true;
-								largeCoeffList = coeffs;
-								smallCoeffList = v.coeffs;
-							}else{
-								largeCoeffList = v.coeffs;
-								smallCoeffList = coeffs;
-							}
-
-							// make both vectors the same length
-							for (int i = 0; i < large - small; i++) {
-								smallCoeffList.insert(smallCoeffList.begin(), Value(0));
-							}
-
-							vector<Value> newCoeffs;
-							for (int i = 0; i < large + 1; i++){
-								// insert item in begin
-								if(leftLarge)
-									newCoeffs.push_back(largeCoeffList[i] + smallCoeffList[i]);
-								else
-									newCoeffs.push_back(smallCoeffList[i] + largeCoeffList[i]);
-							}
-							return Value(newCoeffs);
-						}
+				}else if( v.t == POLYNOMIAL){ // POLY + POLY
+					int lenLeft = coeffs.size();
+					int lenRight = v.coeffs.size();
+					// Get len of small and large list
+					int small = min(lenLeft,lenRight) - 1;
+					int large = max(lenLeft,lenRight) - 1;;
+					vector<Value> largeCoeffList, smallCoeffList;
+					// Identifiy the large and small list
+					if(coeffs.size() >= v.coeffs.size()){
+						largeCoeffList = coeffs;
+						smallCoeffList = v.coeffs;
+					}else{
+						largeCoeffList = v.coeffs;
+						smallCoeffList = coeffs;
 					}
 
-			}
- 			return Value(); // invalid!
-		}
+					/*
+					* Make both vectors the same length
+					* by adding zeros to the beginning of the samller list
+					*/
+					for (int i = 0; i < large - small; i++) {
+						smallCoeffList.insert(smallCoeffList.begin(), Value(0));
+					}
+					vector<Value> newCoeffs;
+					for (int i = 0; i < large + 1; i++){
+							newCoeffs.push_back(smallCoeffList[i] + largeCoeffList[i]);
+					}
+					return Value(newCoeffs);
+				}
+
+	}
+		return Value(); // invalid!
+}
 
 		Value operator-(Value& v) {
 	 		if( t == INTEGERVAL ) {
-	 			if( v.t == INTEGERVAL ) return Value( i - v.i );
+	 			if( v.t == INTEGERVAL ) return Value( i - v.i ); // INT - INT
 
-	 			else if( v.t == FLOATVAL ) return Value( i - v.f );
+	 			else if( v.t == FLOATVAL ) return Value( i - v.f ); // INT - FLOAT
 
-				else if( v.t == POLYNOMIAL){
+				else if( v.t == POLYNOMIAL){ // INT - POLY
 					vector<Value> newCoeffs;
+					// Distribute the -1 first
 					for (int i = 0; i < v.coeffs.size() - 1; i++) {
 						v.coeffs[i] = Value(-1) * v.coeffs[i];
 					}
@@ -169,24 +165,29 @@ public:
 				}
 
 	 		} else if( t == FLOATVAL ) {
-				if( v.t == INTEGERVAL ) return Value( f - v.i );
+				if( v.t == INTEGERVAL ) return Value( f - v.i ); // FLOAT - INT
 
-	 			else if( v.t == FLOATVAL ) return Value( f - v.f );
+	 			else if( v.t == FLOATVAL ) return Value( f - v.f ); // FLOAT - FLOAT
 
 	 		} else if( t == POLYNOMIAL){
-					if( v.t == INTEGERVAL || v.t == FLOATVAL){
+					if( v.t == INTEGERVAL || v.t == FLOATVAL){ // POLY - INT or FLOAT
 						Value lastCoeff = coeffs[coeffs.size()-1];
 						coeffs.pop_back();
 						coeffs.push_back(lastCoeff - v);
 						return coeffs;
 
-					}else if( v.t == POLYNOMIAL){
+					}else if( v.t == POLYNOMIAL){ // POLY - POLY
 						int lenLeft = coeffs.size();
 						int lenRight = v.coeffs.size();
 						int small = min(lenLeft,lenRight) - 1;
 						int large = max(lenLeft,lenRight) - 1;;
 						vector<Value> largeCoeffList, smallCoeffList;
+						/*
+						* For subtraction, it matters which list is larger,
+						* even after zeros are added to the smaller list
+					  */
 						bool leftLarge = false;
+						// Identifiy the large and small list
 						if(coeffs.size() >= v.coeffs.size()){
 							leftLarge = true;
 							largeCoeffList = coeffs;
@@ -196,14 +197,16 @@ public:
 							smallCoeffList = coeffs;
 						}
 
-						// make both vectors the same length
+						/*
+						* Make both vectors the same length
+						* by adding zeros to the beginning of the samller list
+						*/
 						for (int i = 0; i < large - small; i++) {
 							smallCoeffList.insert(smallCoeffList.begin(), Value(0));
 						}
 
 						vector<Value> newCoeffs;
 						for (int i = 0; i < large + 1; i++){
-							// insert item in begin
 							if(leftLarge)
 								newCoeffs.push_back(largeCoeffList[i] - smallCoeffList[i]);
 							else
@@ -214,23 +217,23 @@ public:
 				}
 	 			return Value(); // invalid!
 			}
-
+			// Used to keep track of the coefficient and its power
 			struct PolyTerm{
 				Value *coeff;
 				int power;
 			};
 			Value operator*(Value& v) {
 		 		if( t == INTEGERVAL ) {
-		 			if( v.t == INTEGERVAL ) return Value( i * v.i );
-		 			else if( v.t == FLOATVAL ) return Value( i * v.f );
-					else if( v.t == POLYNOMIAL){
+		 			if( v.t == INTEGERVAL ) return Value( i * v.i ); // INT * INT
+		 			else if( v.t == FLOATVAL ) return Value( i * v.f ); // INT * FLOAT
+					else if( v.t == POLYNOMIAL){ // INT * POLY
 						vector<Value> newCoeffs;
 						for (int k = 0; k < v.coeffs.size(); k++){
 							newCoeffs.push_back(Value(i) * v.coeffs[k]);
 						}
 
 						return Value(newCoeffs);
-					}else if( v.t == STRINGVAL ) {
+					}else if( v.t == STRINGVAL ) { // INT * STRING
 						string str = "";
 						for (int j = 0; j < i; j++) {
 							str += v.GetStringValue();
@@ -239,13 +242,21 @@ public:
 			 		}
 
 		 		} else if( t == FLOATVAL ) {
-					if( v.t == INTEGERVAL ) return Value( f * v.i );
+					if( v.t == INTEGERVAL ) return Value( f * v.i ); // FLOAT * INT
 
-		 			else if( v.t == FLOATVAL ) return Value( f * v.f );
+		 			else if( v.t == FLOATVAL ) return Value( f * v.f ); // FLOAT * FLOAT
+					else if( v.t == POLYNOMIAL){ // FLOAT * POLY
+						vector<Value> newCoeffs;
+						for (int k = 0; k < v.coeffs.size(); k++){
+							newCoeffs.push_back(Value(f) * v.coeffs[k]);
+						}
+
+						return Value(newCoeffs);
+					}
 
 		 		} else if( t == STRINGVAL ) {
 					string str = "";
-		 			if( v.t == INTEGERVAL ){
+		 			if( v.t == INTEGERVAL ){ // STRING * INT
 						for (int i = 0; i < v.GetIntValue(); i++) {
 							str += s;
 						}
@@ -253,41 +264,43 @@ public:
 		 				return Value(str);
 		 		} else if( t == POLYNOMIAL){
 					vector<Value> newCoeffs;
-					if (v.t == INTEGERVAL || v.t == FLOATVAL){
+					if (v.t == INTEGERVAL || v.t == FLOATVAL){ // POLY * INT or FLOAT
 						for (int i = 0; i < coeffs.size(); i++) {
 							newCoeffs.push_back(coeffs[i] * v);
 
 						}
 						return Value(newCoeffs);
 
-					} else if(v.t == POLYNOMIAL){
-					  int len = coeffs.size() + v.coeffs.size() - 1;
+					} else if(v.t == POLYNOMIAL){ // POLY * POLY
+						// Note to self: largest power is always -> length of two polynomals - 2. Coincidence?
 					  int leftPower, rightPower;
 					  vector<PolyTerm> polys;
-					  // Note to self: largest power is always -> length of two polynomals - 2
 					  Value product;
 					  PolyTerm t;
 
 						// Foil th two polynomals
 					  for (int i = 0; i < coeffs.size(); ++i){
+							// Current power of the left polynomal
 					    leftPower = (coeffs.size() - 1) - i;
 					    for (int j = 0; j < v.coeffs.size(); ++j) {
+								// Current power of the right polynomal
 					      rightPower = (v.coeffs.size() - 1) - j;
 					      product = Value(coeffs[i] * v.coeffs[j]);
+								// Init struct
 					      t.coeff = new Value(product);
 					      t.power = leftPower + rightPower;
 					      polys.push_back(t);
 					    }
 					  }
-						vector<Value> val;
-						vector<int> evaluatedPower;
+						vector<Value> val; // Represents the final list of coefficients after like terms have been added
+						vector<int> evaluatedPower; // To keep track of the already added same powers
 						Value v;
-						bool found;
+						bool found; // Flag to see if current term had a like term or not
 						// Add like terms
 						for (int i = 0; i < polys.size(); i++) {
 							v = *polys[i].coeff; //Represents the current coefficient in the loop
 							found = false;
-							// Check if the current power has already been added
+							// Check if the current coefficient has already been added
 							if(find(evaluatedPower.begin(), evaluatedPower.end(), polys[i].power) ==
 								evaluatedPower.end()){
 									for (int j = i+1; j < polys.size(); j++) {
@@ -298,7 +311,7 @@ public:
 										}
 									}
 									/* If !found, then current coefficient does not have a like term.
-											Simply it to the vector.
+											Simply add it to the vector.
 									*/
 									if(!found){
 										val.push_back(*polys[i].coeff);
@@ -308,15 +321,11 @@ public:
 									}
 							}
 						}
-
 					  return Value(val);
 					}
-
 				}
-
 		 			return Value(); // invalid!
 				}
-
 };
 
 extern map<string,bool> idMap;
@@ -347,13 +356,16 @@ public:
 		}
 };
 
-// ostream& operator<<(ostream& o, ParseNode *node){
-// 	if(node->left == NULL) o << "NULL";
-// 	else									o << node->left;
-// 	if(node->right == NULL) o << "NULL";
-// 	else										o << node->right;
-// 	return o;
-// }
+/*
+// Operator overload for printing ParseNode objects
+ostream& operator<<(ostream& o, ParseNode *node){
+if(node->left == NULL) o << "NULL";
+	else									o << node->left;
+	if(node->right == NULL) o << "NULL";
+	else										o << node->right;
+	return o;
+}
+*/
 
 
 // a list of statements is represented by a statement to the left, and a list of statments to the right
@@ -400,8 +412,7 @@ public:
 		Value sum = leftVal + rightVal;
 
 		if(sum.GetType() == UNKNOWNVAL){
-			cout << "RUNTIME ERROR: " << ": type mismatch" << endl;
-			exit(0);
+			runtimeError("Type mismatch in PlusOp");
 		}
 
 		return sum;
@@ -420,8 +431,7 @@ public:
 		Value sum = leftVal - rightVal;
 
 		if(sum.GetType() == UNKNOWNVAL){
-			cout << "RUNTIME ERROR: " << ": type mismatch" << endl;
-			exit(0);
+			runtimeError("Type mismatch in MinusOp");
 		}
 
 		return sum;
@@ -440,17 +450,18 @@ public:
 		Value sum = leftVal * rightVal;
 
 		if(sum.GetType() == UNKNOWNVAL){
-			cout << "RUNTIME ERROR: " << ": type mismatch" << endl;
-			exit(0);
+			runtimeError("Type mismatch in TimesOp");
 		}
 
 		return sum;
 	}
 };
 
-// leaves of the parse tree
-// notice that the parent constructors take no arguments
-// that means this is a leaf
+/*
+leaves of the parse tree
+notice that the parent constructors take no arguments
+that means this is a leaf
+*/
 class Iconst : public ParseNode {
 	int	iValue;
 public:
@@ -518,6 +529,7 @@ public:
 	Value eval(map<string,Value>& symbolTable){
 			vector<Value> coeffs;
 			Value coeffVal;
+			// Converting the ParseNode* vector to a Value vector
 			for (int i = 0; i < v.size(); i++) {
 				coeffVal = v[i] -> eval(symbolTable);
 				coeffs.push_back(coeffVal);
@@ -531,19 +543,17 @@ public:
  	Eval(ParseNode *l, ParseNode *r) : ParseNode(l,r) {}
 	Value eval(map<string,Value>& symbolTable){
 		Value leftVal = left -> eval(symbolTable);
-		// cout << "LEFT: " << leftVal << endl;
-
 		Value rightVal = right -> eval(symbolTable);
-		// cout << "RGIHT: " << rightVal << endl;
 
 		if(rightVal.GetType() != INTEGERVAL && rightVal.GetType() != FLOATVAL){
-			cout << "RUNTIME ERROR: Coeffs can only be evaluated at int and float values." << endl;
-			exit(0);
+			runtimeError("Coefficients can only be evaluated at int and float values.");
 		}
 		vector<Value> coeffs(leftVal.GetPolyValue());
 		if(leftVal.GetType() == POLYNOMIAL){
+			// Get the highest power of the polynomal (leftmost coefficient)
 			int amount_of_x = coeffs.size() - 1;
 			Value ans(0), curr_x, val;
+
 			for (int i = 0; i < coeffs.size() - 1; i++){
 				if(rightVal.GetType() == INTEGERVAL)
 					val = Value(int(pow(rightVal.GetIntValue(), amount_of_x)));
@@ -553,16 +563,15 @@ public:
 
 				curr_x = Value(coeffs[i] * val);
 				ans = ans + curr_x;
+				// Decrement the power by one because the next coefficient to the right has one less power
 				amount_of_x--;
 			}
-			// add the last coeff to the answer
+			// add the last coefficient to the answer
 			ans = ans + coeffs[coeffs.size()-1];
 			return Value(ans);
 		} else{
-			cout << "RUNTIME ERROR: Only polynomals can be evaluted" << endl;
-			exit(0);
+			runtimeError("Only polynomals can be evaluted");
 		}
-
 	}
  };
 
