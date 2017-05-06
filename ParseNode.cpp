@@ -16,7 +16,7 @@ using namespace std;
 static bool pushedBack = false;
 static Token pushedToken;
 
-// int globalErrorCount = 0;
+int globalErrorCount = 0;
 
 Token GetToken(istream& in) {
 	if( pushedBack ) {
@@ -39,8 +39,8 @@ void PutBackToken(Token& t) {
 }
 
 // handy function to print out errors
-void error(string s) {
-	cout << "Line " << currentLine << ": "<< s << endl;
+void error(string message) {
+	cout << "Line " << currentLine << ": "<< message << endl;
 	++globalErrorCount;
 }
 
@@ -61,6 +61,9 @@ ParseNode *Stmt(istream& in) {
 		Token idTok = GetToken(in);
 		if( idTok != ID ) {
 			error("PARSE ERROR: Identifier required after set");
+			string line;
+			getline(in, line);
+			cout << ">> " << line << endl;
 			return 0;
 		}
 		ParseNode *exp = Expr(in);
@@ -102,6 +105,7 @@ ParseNode *Expr(istream& in) {
 	ParseNode *term = Term(in);
 	if (term == 0 && hasOp){
 		error("PARSE ERROR: Missing term after operator");
+		return 0;
 	}
 	hasOp = false;
 	Token tok = GetToken(in);

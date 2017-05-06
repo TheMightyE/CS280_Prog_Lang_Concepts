@@ -14,8 +14,6 @@ using namespace std;
 
 #include "ParseNode.h"
 
-//int currentLine = 0;
-int globalErrorCount = 0;
 map<string,Value> symbolTable;
 map<string,bool> idMap;
 

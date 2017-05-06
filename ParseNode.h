@@ -76,7 +76,7 @@ public:
 			}
 			o << " }";
 		}
-		if( v.GetType() == UNKNOWNVAL  ) o << "operator ERROR";
+		if( v.GetType() == UNKNOWNVAL  ) o << "operator mismatch for: " << v;
 		return o;
 	}
 
@@ -412,7 +412,7 @@ public:
 		Value sum = leftVal + rightVal;
 
 		if(sum.GetType() == UNKNOWNVAL){
-			runtimeError("Type mismatch in PlusOp");
+			runtimeError("Type mismatch for PlusOp");
 		}
 
 		return sum;
@@ -431,7 +431,7 @@ public:
 		Value sum = leftVal - rightVal;
 
 		if(sum.GetType() == UNKNOWNVAL){
-			runtimeError("Type mismatch in MinusOp");
+			runtimeError("Type mismatch for MinusOp");
 		}
 
 		return sum;
@@ -450,7 +450,7 @@ public:
 		Value sum = leftVal * rightVal;
 
 		if(sum.GetType() == UNKNOWNVAL){
-			runtimeError("Type mismatch in TimesOp");
+			runtimeError("Type mismatch for TimesOp");
 		}
 
 		return sum;
